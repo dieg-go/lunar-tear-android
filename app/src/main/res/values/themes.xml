@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Deliberately a platform theme, not an AppCompat/Material XML theme: the
+         UI is entirely Compose, so the app does not depend on the Material
+         Components library at all. -->
+    <style name="Theme.LunarTear" parent="@android:style/Theme.Material.NoActionBar">
+        <item name="android:windowBackground">@android:color/background_dark</item>
+    </style>
+</resources>

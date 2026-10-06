@@ -1,0 +1,3 @@
+# Placeholder so `//go:embed all:migrations` compiles before the build script
+# copies the real *.sql files in from $LUNAR_TEAR_SRC/server/migrations.
+# tools/build-native.ps1 overwrites this directory (keeping this file).

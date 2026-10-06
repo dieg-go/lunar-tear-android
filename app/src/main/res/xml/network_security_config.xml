@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  The supervisor asks the running game server to re-read the master data through its
+  admin webhook, http://127.0.0.1:8082/api/admin/master-data/reload.
+
+  Cleartext HTTP is off by default for targetSdk 28+, so without this both "Reload"
+  buttons fail with "Cleartext HTTP traffic to 127.0.0.1 not permitted" - the patch
+  is written to disk, but the server keeps serving the copy it parsed at startup.
+
+  Loopback is the only host this app ever speaks to in the clear (every other
+  connection is either a raw socket or one of its own Go child processes), so the
+  exception is scoped to it instead of setting usesCleartextTraffic on the app.
+-->
+<network-security-config>
+    <domain-config cleartextTrafficPermitted="true">
+        <domain includeSubdomains="false">127.0.0.1</domain>
+        <domain includeSubdomains="false">localhost</domain>
+    </domain-config>
+</network-security-config>

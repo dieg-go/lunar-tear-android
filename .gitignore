@@ -1,0 +1,49 @@
+# Build output
+.gradle/
+build/
+app/build/
+captures/
+
+# Kotlin Gradle plugin session state and compiler-error logs, at the repo root
+.kotlin/
+
+# Machine-local SDK path (written by tools/bootstrap-sdk.ps1)
+local.properties
+
+# Toolchain cache: SDK, Gradle, protoc, Go caches, logs (all under tools/)
+tools/.cache/
+
+# Generated native binaries + their provenance manifest.
+# Rebuild with: powershell -ExecutionPolicy Bypass -File tools\build-native.ps1
+app/src/main/jniLibs/
+app/src/main/java/dev/lunartear/host/core/NativeManifest.kt
+
+# Migrations are copied in at build time from $LUNAR_TEAR_SRC/server/migrations
+native/cmd/lt-migrate/migrations/*.sql
+
+# Artifacts
+*.apk
+*.aab
+*.idsig
+
+# Signing secrets. The release key itself is kept outside the repository (see
+# tools/gen-release-keystore.ps1); these patterns mean a copy that ends up in
+# the tree still cannot be committed. keystore.properties holds its passwords.
+*.keystore
+*.jks
+keystore.properties
+
+# Patcher scratch output: whatever was last produced by hand here (a patched
+# client APK, the patched blob it was built from). `*.bin.e` is the client's
+# encrypted master data and `.orig` is the copy the patcher keeps beside it -
+# both are game data. This repo ships no game assets, no game APK and no master
+# data, so none of it may be committed even though it sits inside the repo.
+patched/
+*.bin.e
+*.bin.e.orig
+
+# IDE / OS
+.idea/
+*.iml
+.DS_Store
+Thumbs.db

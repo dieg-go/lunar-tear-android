@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<paths>
+    <!-- Patched APKs are written here before being handed to the installer. -->
+    <files-path name="patched" path="patched/" />
+    <files-path name="logs" path="logs/" />
+    <cache-path name="cache" path="." />
+</paths>

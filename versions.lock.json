@@ -1,0 +1,39 @@
+﻿{
+    "generatedBy":  "tools/update-lock.ps1",
+    "generatedAtUtc":  "2026-10-05T15:07:47Z",
+    "lunarTear":  {
+                      "path":  "C:\\Users\\diego\\lunar-tear",
+                      "remote":  "https://github.com/Walter-Sparrow/lunar-tear",
+                      "branch":  "main",
+                      "commit":  "63df7d70556a7180f04312abbafc56494cf70545",
+                      "shortCommit":  "63df7d7",
+                      "dirty":  false,
+                      "dirtyDetail":  [
+
+                                      ],
+                      "goVersionTarget":  "1.25+",
+                      "protosSha256":  "ff16a7690558561a70b539cfc698ed906d0e6152230ad120812c8a2ed6482291",
+                      "migrationsSha256":  "3d0b16268e651916878174c4ecd64de3100a3538be871da2c57d59105e03955e",
+                      "migrationCount":  16
+                  },
+    "lunarScripts":  {
+                         "path":  "C:\\Users\\diego\\lunar-scripts",
+                         "patchesSha256":  "0ab3c7e56734b8990c35cc5a05b96c42884966c9248c3a7bbdeb64a897cc72e1",
+                         "masterdataSha256":  "2c442604d8c049edf20d230339c81593fad2036f1165269e145b12a7f51fa487",
+                         "listbinSha256":  "2d1d5604037496522210843f17d495d2fd161fb8eaee216692df9c1379156ecb"
+                     },
+    "client":  {
+                   "packageName":  "com.square_enix.android_googleplay.nierspww",
+                   "versionName":  "3.7.1",
+                   "versionCode":  152,
+                   "targetSdk":  33,
+                   "abi":  "arm64-v8a"
+               },
+    "android":  {
+                    "compileSdk":  35,
+                    "buildTools":  "35.0.0",
+                    "gradle":  "8.9",
+                    "agp":  "8.7.3",
+                    "kotlin":  "2.0.21"
+                }
+}

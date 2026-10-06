@@ -1,0 +1,24 @@
+# Store text as LF in the repository, whatever the platform that commits it.
+* text=auto
+
+# These are POSIX shell scripts: gradlew runs on Linux/macOS, and the ones under
+# tools/device/ are pushed to the phone and run by `sh`. A CRLF would end up in
+# the shebang and in every command, so force LF in the working tree as well.
+*.sh    text eol=lf
+gradlew text eol=lf
+
+# Windows-only scripts.
+*.ps1   text eol=crlf
+*.bat   text eol=crlf
+
+# Never touch these.
+*.jar       binary
+*.apk       binary
+*.so        binary
+*.bin       binary
+*.bin.e     binary
+*.png       binary
+*.jpg       binary
+*.webp      binary
+*.keystore  binary
+*.jks       binary
