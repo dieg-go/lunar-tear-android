@@ -88,6 +88,43 @@ class AxmlEditorTest {
         assertEquals("3.7.1", AxmlEditor.versionName(patched))
     }
 
+    /**
+     * AXML requires an element's attributes to be sorted by resource id, because
+     * the platform resolves them with a binary search over that list
+     * (ResXMLTree::indexOfAttribute). Appending the new attribute at the end
+     * produces a manifest that still installs and that aapt2 (a linear scanner)
+     * still reports correctly - but on the device every lookup past the insertion
+     * point resolves the wrong attribute. That is what left the patched client
+     * stuck at "Loading... 60.00%" with "Failed to connect. Retrying.", never
+     * requesting a single asset, while an APK built by apktool from the same
+     * sources worked.
+     */
+    @Test
+    fun `the patched manifest keeps application attributes sorted by resource id`() {
+        requireCorpus()
+        val patched = AxmlEditor.enableCleartextTraffic(manifest.readBytes())
+        val reader = AxmlReader(patched)
+        val application = reader.findElement("application")!!
+
+        val ids = application.attrs.map { reader.attrResourceId(it) }
+        assertEquals(
+            "attributes are no longer sorted by resource id: " +
+                ids.joinToString { "0x%08x".format(it) },
+            ids.sorted(),
+            ids,
+        )
+
+        // And the new attribute sits in its sorted slot rather than at the end.
+        val index = application.attrs.indexOfFirst {
+            reader.attrResourceId(it) == AxmlAttrs.USES_CLEARTEXT_TRAFFIC
+        }
+        assertTrue("usesCleartextTraffic was not found", index >= 0)
+        assertTrue(
+            "usesCleartextTraffic was appended instead of inserted in resource-id order",
+            index < application.attrs.size - 1,
+        )
+    }
+
     @Test
     fun `enabling cleartext twice is idempotent`() {
         requireCorpus()

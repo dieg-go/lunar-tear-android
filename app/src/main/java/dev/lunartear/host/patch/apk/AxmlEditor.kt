@@ -377,10 +377,22 @@ object AxmlEditor {
                     val newCount = element.attrs.size + 1
                     elementBytes[28] = newCount.toByte()
                     elementBytes[29] = (newCount shr 8).toByte()
-                    val attrsEnd = 16 + element.attributeStart + element.attrs.size * element.attributeSize
-                    out.write(elementBytes, 0, attrsEnd)
+                    // AXML requires the attribute list to be sorted by resource id.
+                    // The platform looks an attribute up with a binary search over
+                    // it (ResXMLTree::indexOfAttribute), so appending the new
+                    // attribute at the end makes every later lookup miss or return
+                    // the wrong attribute - the manifest still *installs*, and
+                    // aapt2 (which scans linearly) still reports the attribute, but
+                    // the running app reads a different one. Insert it where it
+                    // sorts instead.
+                    val attrsBase = 16 + element.attributeStart
+                    val insertIndex = element.attrs
+                        .indexOfFirst { reader.attrResourceId(it) > attrResId }
+                        .let { if (it < 0) element.attrs.size else it }
+                    val insertAt = attrsBase + insertIndex * element.attributeSize
+                    out.write(elementBytes, 0, insertAt)
                     out.write(newAttribute)
-                    out.write(elementBytes, attrsEnd, elementBytes.size - attrsEnd)
+                    out.write(elementBytes, insertAt, elementBytes.size - insertAt)
                 }
 
                 else -> out.write(source, offset, size)
@@ -401,6 +413,17 @@ object AxmlEditor {
         if (check.attrOf(patched, attrResId) == null) {
             throw AxmlException("internal error: the new attribute did not survive re-reading")
         }
+        // The platform binary-searches this list, so an unsorted one is worse than
+        // a rejected patch: the manifest installs and aapt2 still reads it, but the
+        // running app resolves a different attribute. (Attribute ids of 0 mean "no
+        // resource id" and are skipped by that search.)
+        val ids = patched.attrs.map { check.attrResourceId(it) }.filter { it != 0 }
+        if (ids != ids.sorted()) {
+            throw AxmlException(
+                "internal error: <$elementName> attributes are no longer sorted by resource id: " +
+                    ids.joinToString { "0x%08x".format(it) },
+            )
+        }
         return result
     }
 
@@ -411,6 +434,27 @@ object AxmlEditor {
             elementName = "application",
             attrName = "usesCleartextTraffic",
             attrResId = AxmlAttrs.USES_CLEARTEXT_TRAFFIC,
+            valueType = AxmlAttrs.TYPE_INT_BOOLEAN,
+            valueData = AxmlAttrs.VALUE_TRUE,
+        )
+
+    /**
+     * Sets `android:extractNativeLibs="true"`, matching what the reference
+     * (apktool-based) patch produces.
+     *
+     * Not used by the patch: it was added while chasing the 60% loading stall and
+     * proved neither necessary nor sufficient (builds with it stalled, and the
+     * build that finally worked also had it). Kept because the manifest editor
+     * has to be able to update an existing attribute in place, and the reference
+     * sets it; wire it up in [ApkPatcher] if the packaging ever needs to match.
+     */
+    @Suppress("unused")
+    fun enableExtractNativeLibs(source: ByteArray): ByteArray =
+        setAttribute(
+            source = source,
+            elementName = "application",
+            attrName = "extractNativeLibs",
+            attrResId = AxmlAttrs.EXTRACT_NATIVE_LIBS,
             valueType = AxmlAttrs.TYPE_INT_BOOLEAN,
             valueData = AxmlAttrs.VALUE_TRUE,
         )
