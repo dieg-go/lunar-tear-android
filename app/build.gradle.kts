@@ -54,6 +54,19 @@ val hasReleaseKeystore = releaseKeystore.getProperty("storeFile") != null
 // at the dot, and Gradle then reports the second half as an unknown task.
 val allowDebugSignedRelease = findProperty("allowDebugSignedRelease") == "true"
 
+// The debug key AGP generates lives wherever ANDROID_USER_HOME points. Every
+// script in tools/ points that at tools/.cache/android-user, but Android Studio
+// launched from the Start menu has no such variable and would sign with
+// ~/.android/debug.keystore instead. Those are two different keys, so an APK
+// built in the IDE cannot be installed over one built from the command line --
+// and the only way forward from there is to uninstall, which deletes the host
+// app's files/db/game.db, i.e. every account, quest and pull.
+//
+// Pinning the keystore takes the environment out of that decision. Guarded, so
+// a clone whose tools/.cache has not been bootstrapped yet still falls back to
+// AGP's own default rather than failing on a missing file.
+val pinnedDebugKeystore = rootProject.file("tools/.cache/android-user/debug.keystore")
+
 android {
     namespace = "dev.lunartear.host"
     compileSdk = 35
@@ -70,6 +83,14 @@ android {
                 keyAlias = releaseKeystore.getProperty("keyAlias")
                 keyPassword = releaseKeystore.getProperty("keyPassword")
                     ?: releaseKeystore.getProperty("storePassword")
+            }
+        }
+        if (pinnedDebugKeystore.exists()) {
+            getByName("debug") {
+                storeFile = pinnedDebugKeystore
+                storePassword = "android"
+                keyAlias = "androiddebugkey"
+                keyPassword = "android"
             }
         }
     }
