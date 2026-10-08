@@ -369,7 +369,7 @@ class ServerSupervisor(
 
         _state.value = ServerState(
             phase = Phase.RUNNING,
-            detail = "serving ${root.name} Â· client connects to ${addresses.host}",
+            detail = "serving ${root.name} · client connects to ${addresses.host}",
             since = System.currentTimeMillis(),
             grpcPort = config.grpcPort,
             cdnPort = config.cdnPort,
