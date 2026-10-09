@@ -16,6 +16,9 @@
     5. the CDN serves the catalog and the master data over HTTP
     6. optionally: master data is extended to 2030 and the server reloads it
     7. the session log is pulled next to the script for inspection
+    8. the asset root the app had before the run is restored (the app saves
+       whatever root it is started with, so a smoke run against the fixture
+       would otherwise leave the device serving 40 MB)
 
 .EXAMPLE
   powershell -ExecutionPolicy Bypass -File tools\device-smoke.ps1
@@ -30,7 +33,9 @@ param(
     [switch]$SkipInstall,
     [switch]$GrpcProbe,
     [switch]$PatchMasterData,
-    [switch]$KeepRunning
+    [switch]$KeepRunning,
+    # Leave the app pointed at -AssetRoot instead of restoring the root it had.
+    [switch]$NoRestoreAssetRoot
 )
 
 $ErrorActionPreference = 'Continue'
@@ -58,6 +63,19 @@ function Get-AppLog([string]$Session = '') {
     if (-not $Session) { return '' }
     return (Invoke-Adb @('shell', 'run-as', $Package, 'cat', "/data/data/$Package/files/logs/$Session")).Output
 }
+
+function Get-RememberedAssetRoot {
+    $prefs = (Invoke-Adb @('shell', 'run-as', $Package, 'cat', "/data/data/$Package/shared_prefs/lunar-tear-host.xml")).Output
+    if ($prefs -match 'assetRoot&quot;:&quot;([^&]+)') { return ($Matches[1] -replace '\\/', '/') }
+    return ''
+}
+
+# Remember the user's own asset root before pointing the app at the fixture. The
+# app persists whatever root it is started with, so without this a smoke run
+# leaves the device serving the tiny fixture, which is indistinguishable from
+# broken asset downloads until someone reads the CDN log.
+$script:PriorAssetRoot = Get-RememberedAssetRoot
+if ($script:PriorAssetRoot) { Write-Host "[smoke] app's asset root before this run: $($script:PriorAssetRoot)" }
 
 # ---------------------------------------------------------------- 1. device
 Write-Host "== device =="
@@ -201,6 +219,28 @@ $outLog = Join-Path $PSScriptRoot ".cache\logs\device-smoke-$(Get-Date -Format y
 New-Item -ItemType Directory -Force (Split-Path -Parent $outLog) | Out-Null
 Get-AppLog | Set-Content -Path $outLog -Encoding utf8
 Write-Host "`nSession log saved to $outLog"
+
+# ---------------------------------------------------------------- 8. restore
+# Put the app back on the root it had, before the stop/keep decision below, so
+# the run leaves the device exactly as it found it.
+if ($script:PriorAssetRoot -and ($script:PriorAssetRoot -ne $AssetRoot) -and (-not $NoRestoreAssetRoot)) {
+    Write-Host "`n== restoring the app's asset root =="
+    Invoke-Adb @('shell', 'am', 'force-stop', $Package) | Out-Null
+    Start-Sleep -Seconds 2
+    Invoke-Adb @('shell', 'am', 'start', '-n', "$Package/dev.lunartear.host.MainActivity",
+        '--es', 'assetRoot', $script:PriorAssetRoot, '--ez', 'autoStart', 'true') | Out-Null
+
+    $deadline = (Get-Date).AddSeconds($BootTimeoutSeconds)
+    $restored = $false
+    while ((Get-Date) -lt $deadline) {
+        Start-Sleep -Seconds 5
+        if ((Get-AppLog) -match 'gRPC server listening') { $restored = $true; break }
+    }
+    $now = Get-RememberedAssetRoot
+    Check 'asset root restored after the run' ($restored -and ($now -eq $script:PriorAssetRoot)) "now $now"
+} elseif ($NoRestoreAssetRoot) {
+    Write-Host "`n[smoke] -NoRestoreAssetRoot: leaving the app on $AssetRoot"
+}
 
 if (-not $KeepRunning) {
     Invoke-Adb @('shell', 'am', 'force-stop', $Package) | Out-Null

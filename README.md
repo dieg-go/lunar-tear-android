@@ -313,7 +313,11 @@ background job.
 
 `tools/device-smoke.ps1` defaults to a deliberately tiny fixture root
 (`/sdcard/lunar-tear`: real `list.bin` + master data + 3 bundles) so the smoke test
-stays fast; pass `-AssetRoot /sdcard/lunar-tear-full` to exercise a real tree.
+stays fast; pass `-AssetRoot /sdcard/lunar-tear-full` to exercise a real tree. It
+reads the app's current asset root before it starts and restores it at the end of
+the run (`-NoRestoreAssetRoot` opts out), because the app persists whichever root
+it is started with — without that, a smoke run would leave the device serving 40 MB
+and look exactly like broken asset downloads.
 
 ## How it fits together
 
