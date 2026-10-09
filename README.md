@@ -386,6 +386,21 @@ tunables: no tunables.json, using built-in defaults (SSR 5.00% (costume 2.00%, w
 tunables: loaded tuned.json (SSR 100.00% (costume 50.00%, weapon 50.00%), SR 0.00%, featured rate-up 100%, pity 1, single 0 gems, multi 0 gems for 10, step-up boost 1.50x/2.00x)
 ```
 
+The same two runs were then repeated on the phone — APK installed over the
+existing one, `tunables.json` written next to `assets/`, server started from the
+app — and the app's own session log reports the same thing, first with an extreme
+file and then with the saner one that is the example above:
+
+```
+09:52:29 [game] tunables: loaded tunables.json (SSR 100.00% (costume 50.00%, weapon 50.00%), SR 0.00%, featured rate-up 35%, pity 1, single 0 gems, multi 0 gems for 10, step-up boost 1.50x/2.00x)
+09:52:37 [game] tunables: loaded tunables.json (SSR 10.00% (costume 5.00%, weapon 5.00%), SR 30.00%, featured rate-up 50%, pity 100, single 0 gems, multi 0 gems for 10, step-up boost 1.50x/2.00x)
+```
+
+What that proves is that the file is found, parsed and applied where the server
+runs. The numbers reaching an actual pull are covered by the unit tests instead:
+the draw honours the weights, and `Apply` writes the prices and pity that the
+banner catalog is built from at startup.
+
 A mistyped key or an out-of-range value **stops the server** with the field named
 — `tunables: parse: json: unknown field "pityCeiling"` — rather than quietly
 running on the defaults. The file is read once at startup, so *Reload server* in
