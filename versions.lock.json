@@ -1,12 +1,12 @@
 ﻿{
     "generatedBy":  "tools/update-lock.ps1",
-    "generatedAtUtc":  "2026-10-05T15:07:47Z",
+    "generatedAtUtc":  "2026-10-09T12:33:31Z",
     "lunarTear":  {
                       "path":  "C:\\Users\\diego\\lunar-tear",
-                      "remote":  "https://github.com/Walter-Sparrow/lunar-tear",
-                      "branch":  "main",
-                      "commit":  "63df7d70556a7180f04312abbafc56494cf70545",
-                      "shortCommit":  "63df7d7",
+                      "remote":  "https://github.com/dieg-go/lunar-tear",
+                      "branch":  "tunables",
+                      "commit":  "92f1642898825ac86bc6a271eb51f6de28e90ade",
+                      "shortCommit":  "92f1642",
                       "dirty":  false,
                       "dirtyDetail":  [
 

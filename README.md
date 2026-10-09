@@ -340,6 +340,62 @@ The Go servers are ordinary ELF executables packaged as `lib*.so`. Android extra
 those into `nativeLibraryDir`, the only location an app may execute from on
 Android 10+ (app data directories are mounted `noexec`).
 
+## Tuning the server (gacha odds, prices, pity)
+
+Upstream compiles the gacha's odds, prices and pity into the binary, so changing
+them means rebuilding it. The bundled `liblt-server.so` is therefore built from a
+fork that carries one addition ([`dieg-go/lunar-tear`](https://github.com/dieg-go/lunar-tear)
+at `92f1642`, pinned in `versions.lock.json`): those values are now defaults that
+an optional `tunables.json` overlays at startup.
+
+On the phone the file goes in the asset folder — the server's working directory,
+so it sits next to `assets/` — and any file manager can edit it:
+
+```
+/sdcard/lunar-tear/tunables.json
+```
+
+```json
+{
+  "gacha": {
+    "costumeSSRWeight": 500,
+    "weaponSSRWeight": 500,
+    "costumeSRWeight": 500,
+    "weaponSRWeight": 1000,
+    "weaponRWeight": 7500,
+    "featuredRateUpPercent": 50,
+    "pityCeilingCount": 100,
+    "premiumSinglePullPrice": 0,
+    "premiumMultiPullPrice": 0
+  }
+}
+```
+
+Weights are relative, not percentages: they are divided by their sum, so
+upstream's `200/300/500/1000/8000` out of 10000 is 2% costume SSR, 3% weapon SSR,
+5% costume SR, 10% weapon SR and 80% weapon R. With no file at all — and with an
+empty one — every value keeps its built-in default, so the app behaves exactly as
+it did before until you write one.
+
+The startup log reports which of the two happened and what the effective odds
+are, which is how you confirm it on the phone. Observed on the host against the
+real master data, once with no file and once with the tuned file above:
+
+```
+tunables: no tunables.json, using built-in defaults (SSR 5.00% (costume 2.00%, weapon 3.00%), SR 15.00%, featured rate-up 35%, pity 200, single 300 gems, multi 3000 gems for 10, step-up boost 1.50x/2.00x)
+tunables: loaded tuned.json (SSR 100.00% (costume 50.00%, weapon 50.00%), SR 0.00%, featured rate-up 100%, pity 1, single 0 gems, multi 0 gems for 10, step-up boost 1.50x/2.00x)
+```
+
+A mistyped key or an out-of-range value **stops the server** with the field named
+— `tunables: parse: json: unknown field "pityCeiling"` — rather than quietly
+running on the defaults. The file is read once at startup, so *Reload server* in
+the app is what applies an edit; a UTF-8 byte order mark (Notepad, PowerShell
+`Set-Content -Encoding utf8`) is tolerated.
+
+Upstream's README documents every field. Rebuilding the binaries is
+`tools/build-native.ps1`, which also regenerates `NativeManifest.kt` so the
+Diagnostics tab still reports what is actually installed.
+
 ## Prerequisites
 
 * Windows with PowerShell 5.1+
